@@ -1,6 +1,12 @@
 import logging
 import django
 import json
+
+try:
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    MiddlewareMixin = object
+
 from span.constants import SERVER_RECV, SERVER_SEND
 from zipkin_data import ZipkinData, ZipkinId
 from data_store import default as default_data_store
@@ -46,8 +52,9 @@ class ZipkinDjangoRequestParser(object):
         )
 
 
-class ZipkinMiddleware(object):
-    def __init__(self, store=None, api=None):
+class ZipkinMiddleware(MiddlewareMixin):
+    def __init__(self, store=None, api=None, get_response=None):
+        super(ZipkinMiddleware, self).__init__(get_response)
         self.store = store or default_data_store
         self.request_parser = ZipkinDjangoRequestParser()
         self.id_generator = SimpleIdGenerator()
